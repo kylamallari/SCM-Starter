@@ -7,20 +7,24 @@ contract Assessment {
     address payable public owner;
     uint256 public balance;
 
+    uint256 public applePrice = 3;
+    uint256 public mangoPrice = 5;
+
     event Deposit(uint256 amount);
     event Withdraw(uint256 amount);
+    event ItemBought(string item, uint256 price);
 
     constructor(uint initBalance) payable {
         owner = payable(msg.sender);
         balance = initBalance;
     }
 
-    function getBalance() public view returns(uint256){
+    function getBalance() public view returns (uint256) {
         return balance;
     }
 
     function deposit(uint256 _amount) public payable {
-        uint _previousBalance = balance;
+        uint256 _previousBalance = balance;
 
         // make sure this is the owner
         require(msg.sender == owner, "You are not the owner of this account");
@@ -40,12 +44,13 @@ contract Assessment {
 
     function withdraw(uint256 _withdrawAmount) public {
         require(msg.sender == owner, "You are not the owner of this account");
-        uint _previousBalance = balance;
+        uint256 _previousBalance = balance;
         if (balance < _withdrawAmount) {
-            revert InsufficientBalance({
-                balance: balance,
-                withdrawAmount: _withdrawAmount
-            });
+            revert
+                InsufficientBalance({
+                    balance: balance,
+                    withdrawAmount: _withdrawAmount
+                });
         }
 
         // withdraw the given amount
@@ -56,5 +61,20 @@ contract Assessment {
 
         // emit the event
         emit Withdraw(_withdrawAmount);
+    }
+
+    function buyItem(string memory item) public {
+        uint256 itemPrice;
+         if (keccak256(abi.encodePacked(item)) == keccak256(abi.encodePacked("apple"))) {
+            itemPrice = applePrice;
+        } else if (keccak256(abi.encodePacked(item)) == keccak256(abi.encodePacked("mango"))) {
+            itemPrice = mangoPrice;
+        } else {
+            revert("Invalid item");
+        }
+
+        require(balance >= itemPrice, "Insufficient funds to buy item");
+        balance -= itemPrice;
+        emit ItemBought(item, itemPrice);
     }
 }
